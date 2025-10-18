@@ -1,23 +1,47 @@
 package scanner
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"os/exec"
 	"strings"
 	"sync"
+	"time"
+
+	"github.com/redis/go-redis/v9"
 )
 
-//var execCommand = exec.Command  // <--- For unit tests
+// Redis client and context
+var ctx = context.Background()
+var rdb = redis.NewClient(&redis.Options{
+	Addr: "localhost:6379",
+})
+
+// execCommand can be overridden in tests
+var execCommand = exec.Command
 
 type Device struct {
-	IP       string
-	MAC      string
-	Hostname string
+	IP       string `json:"ip"`
+	MAC      string `json:"mac"`
+	Hostname string `json:"hostname"`
 }
 
-// ScanCIDR runs a basic ping sweep over a subnet and returns live hosts.
+// ScanCIDR performs a ping sweep and caches results in Redis for 30 seconds.
 func ScanCIDR(cidr string) []Device {
+	cacheKey := fmt.Sprintf("scan:%s", cidr)
+
+	// Try to load from cache first
+	if cached, err := rdb.Get(ctx, cacheKey).Result(); err == nil && cached != "" {
+		var devices []Device
+		if err := json.Unmarshal([]byte(cached), &devices); err == nil {
+			fmt.Println("Loaded scan results from Redis cache")
+			return devices
+		}
+	}
+
+	// Otherwise, perform full network scan
 	ipList := getIPsInRange(cidr)
 	var devices []Device
 	var wg sync.WaitGroup
@@ -27,8 +51,7 @@ func ScanCIDR(cidr string) []Device {
 		wg.Add(1)
 		go func(ip string) {
 			defer wg.Done()
-			// Ping host once, short timeout
-			cmd := exec.Command("ping", "-n", "1", "-w", "200", ip)
+			cmd := execCommand("ping", "-n", "1", "-w", "200", ip)
 			output, err := cmd.CombinedOutput()
 			if err == nil && strings.Contains(string(output), "TTL=") {
 				hostname := reverseLookup(ip)
@@ -45,6 +68,13 @@ func ScanCIDR(cidr string) []Device {
 	}
 
 	wg.Wait()
+
+	// Cache results for 30 seconds
+	if len(devices) > 0 {
+		data, _ := json.Marshal(devices)
+		rdb.Set(ctx, cacheKey, data, 30*time.Second)
+	}
+
 	return devices
 }
 
@@ -73,7 +103,7 @@ func inc(ip net.IP) {
 	}
 }
 
-// reverseLookup tries to resolve the hostname for a given IP.
+// reverseLookup resolves a hostname for a given IP (if available).
 func reverseLookup(ip string) string {
 	names, err := net.LookupAddr(ip)
 	if err != nil || len(names) == 0 {
@@ -82,9 +112,9 @@ func reverseLookup(ip string) string {
 	return strings.TrimSuffix(names[0], ".")
 }
 
-// getMac checks the ARP table for a MAC entry matching the IP.
+// getMac checks the ARP table for a MAC address matching the given IP.
 func getMac(ip string) string {
-	cmd := exec.Command("arp", "-a", ip)
+	cmd := execCommand("arp", "-a", ip)
 	output, _ := cmd.CombinedOutput()
 	out := string(output)
 	if strings.Contains(out, ip) {
