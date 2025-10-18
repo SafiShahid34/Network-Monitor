@@ -1,0 +1,85 @@
+body {
+  background-color: #0f172a;
+  color: #f1f5f9;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  margin: 0;
+  padding: 2rem;
+}
+
+.dashboard {
+  width: 100%;
+  max-width: 850px;
+  background: #1e293b;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
+  text-align: center;
+}
+
+.title {
+  font-size: 2.2rem;
+  color: #38bdf8;
+  margin-bottom: 1.5rem;
+}
+
+.scan-btn {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  font-weight: 600;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.scan-btn:hover {
+  background: #1d4ed8;
+}
+
+.scan-btn:disabled {
+  background: #475569;
+  cursor: not-allowed;
+}
+
+.table-container {
+  margin-top: 2rem;
+  overflow-x: auto;
+}
+
+.device-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.device-table th {
+  background: #334155;
+  color: #e2e8f0;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.device-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #334155;
+}
+
+.device-table tr:hover {
+  background: #1e293b;
+}
+
+.empty {
+  text-align: center;
+  color: #94a3b8;
+  padding: 1.5rem;
+}
+
+.footer {
+  margin-top: 1rem;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}

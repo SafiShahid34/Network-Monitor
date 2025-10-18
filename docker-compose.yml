@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis:7
+    container_name: nm-redis
+    ports:
+      - "6379:6379"
+
+  backend:
+    build: ./backend
+    container_name: nm-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - REDIS_ADDR=redis:6379
+    depends_on:
+      - redis
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nm-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
