@@ -1,51 +1,29 @@
 🧭 Network Monitor Dashboard
 
-A full-stack network monitoring dashboard built with Go, React, and Redis.
-The app scans local subnets for active devices, grabs their IP, MAC, and hostname information, and displays everything in a simple web interface.
-
-It’s a small project that mixes system-level networking, concurrent backend design, and a modern frontend UI.
-Everything runs locally, and it’s easy to spin up with Docker and a few commands.
+A simple full-stack app that scans your local network for active devices and shows the results in a web dashboard.
+The backend is built in Go, the frontend in React, and Redis is used to cache scan results for faster responses.
 
 🚀 Features
-Backend (Go)
 
-Runs concurrent ping sweeps across any CIDR subnet using goroutines.
+Scans local networks using ping and arp
 
-Pulls device MAC addresses from the local ARP cache and resolves hostnames through reverse DNS.
+Displays IP, MAC, and hostname for each active device
 
-Uses Redis to cache recent scan results (30-second TTL) so you don’t re-scan the same subnet repeatedly.
+Caches scan results for 30 seconds using Redis
 
-Exposes /scan and /devices endpoints that serve clean JSON to the frontend.
+Clean and responsive web dashboard built with React
 
-Frontend (React)
+⚙️ How It Works
 
-Displays all connected devices in a simple, responsive dashboard.
+The React frontend calls the Go backend to start a scan.
 
-“Scan Network” button triggers the backend scan and updates the table in real time.
+The backend runs a fast, concurrent ping sweep using goroutines.
 
-Built with TypeScript and functional components for clarity and maintainability.
+Results (IP, MAC, hostname) are cached in Redis for quick reloads.
 
-🧠 System Design Overview
-React UI  →  Go REST API  →  Redis Cache  →  Network
+The frontend shows all connected devices in a table.
 
-
-The frontend sends a scan request to /scan.
-
-The backend checks Redis to see if a recent scan result already exists.
-
-If cached data is found, it’s returned immediately.
-
-Otherwise, the backend launches goroutines to ping and resolve each IP, stores the results in Redis, and returns them to the UI.
-
-This design keeps the app responsive, prevents redundant work, and makes it easy to expand later (for example, scheduling scans or tracking history).
-
-🧩 Why These Technologies
-Tech	Purpose	Why It Fits
-Go	Backend, network scanning	Excellent concurrency model, lightweight, great for CLI and systems work.
-React + TypeScript	Frontend UI	Clean component model, strong typing, and a fast development workflow.
-Redis	Cache	In-memory speed with simple TTL support — perfect for short-lived scan data.
-Docker	Local environment	Keeps everything isolated and reproducible across machines.
-⚙️ Getting Started
+🛠️ Setup
 1. Clone the repo
 git clone https://github.com/SafiShahid34/network-monitor.git
 cd network-monitor
@@ -58,35 +36,24 @@ cd backend
 go mod tidy
 go run main.go
 
-
-Backend will run on:
-http://localhost:8080
-
 4. Run the frontend
 cd frontend
 npm install
 npm start
 
-
-Frontend runs on:
-http://localhost:3000
-
 🧪 Tests
 
-The backend includes unit tests that cover:
+The backend includes Go unit tests for:
 
 IP range generation
 
-Incrementing IP addresses
+Incrementing IPs
 
-Reverse DNS lookups
+Reverse DNS
 
-Mocked ping/ARP behavior for ScanCIDR
+Simulated scan behavior
 
-Run them with:
+Run tests:
 
 cd backend
 go test ./... -v
-
-
-These tests mock system commands, so they don’t actually hit your network — useful for CI or local quick checks.
